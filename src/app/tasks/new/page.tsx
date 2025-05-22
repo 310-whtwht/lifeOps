@@ -1,12 +1,12 @@
+"use client";
+
 import { Navigation } from "@/components/Navigation";
 import { TaskForm } from "@/components/tasks/TaskForm";
-
-export const metadata = {
-  title: "新規タスク作成 | LifeOps",
-  description: "新しいタスクを作成します",
-};
+import { useState } from "react";
 
 export default function NewTaskPage() {
+  const [isOpen, setIsOpen] = useState(true);
+
   return (
     <div className="min-h-screen bg-gray-100">
       <Navigation />
@@ -17,7 +17,15 @@ export default function NewTaskPage() {
             新しいタスクの詳細を入力してください。
           </p>
         </div>
-        <TaskForm />
+        <TaskForm
+          task={null}
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          onSave={() => {
+            setIsOpen(false);
+            window.location.href = "/tasks";
+          }}
+        />
       </main>
     </div>
   );

@@ -7,3 +7,12 @@ export interface Journal {
   created_at: string;
   updated_at: string;
 }
+
+export type JournalEntry = {
+  id: string;
+  content: string;
+  mood: number;
+  created_at: string;
+  updated_at: string;
+  tags: string[]; // タグIDの配列
+};

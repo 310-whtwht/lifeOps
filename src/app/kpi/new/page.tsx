@@ -1,4 +1,3 @@
-import { Navigation } from "@/components/Navigation";
 import { KPIForm } from "@/components/kpi/KPIForm";
 
 export const metadata = {
@@ -9,7 +8,6 @@ export const metadata = {
 export default function NewKPIPage() {
   return (
     <div className="min-h-screen bg-gray-100">
-      <Navigation />
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">新規KPI作成</h1>

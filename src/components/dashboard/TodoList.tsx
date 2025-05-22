@@ -1,102 +1,145 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase/client";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 
-type Todo = {
+interface Todo {
   id: string;
   title: string;
-  is_completed: boolean;
-};
+  completed: boolean;
+  created_at: string;
+}
 
 export function TodoList() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [newTodo, setNewTodo] = useState("");
+  const supabase = createClientComponentClient();
 
   useEffect(() => {
     fetchTodos();
   }, []);
 
   const fetchTodos = async () => {
-    const { data, error } = await supabase
-      .from("todos")
-      .select("*")
-      .order("created_at", { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from("todos")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (!error && data) {
-      setTodos(data);
+      if (error) throw error;
+      if (data) setTodos(data);
+    } catch (error) {
+      console.error("Error fetching todos:", error);
     }
   };
 
-  const handleAddTodo = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const addTodo = async () => {
     if (!newTodo.trim()) return;
 
-    const { error } = await supabase
-      .from("todos")
-      .insert([{ title: newTodo.trim() }]);
+    try {
+      const { data, error } = await supabase.from("todos").insert({
+        title: newTodo.trim(),
+        completed: false,
+        created_at: new Date().toISOString(),
+      });
 
-    if (!error) {
-      setNewTodo("");
-      fetchTodos();
+      if (error) throw error;
+      if (data) {
+        setTodos([...todos, data[0]]);
+        setNewTodo("");
+      }
+    } catch (error) {
+      console.error("Error adding todo:", error);
     }
   };
 
-  const handleToggleTodo = async (id: string, is_completed: boolean) => {
-    const { error } = await supabase
-      .from("todos")
-      .update({ is_completed: !is_completed })
-      .eq("id", id);
+  const toggleTodo = async (id: string) => {
+    try {
+      const todo = todos.find((t) => t.id === id);
+      if (!todo) return;
 
-    if (!error) {
-      fetchTodos();
+      const { error } = await supabase
+        .from("todos")
+        .update({ completed: !todo.completed })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setTodos(
+        todos.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
+      );
+    } catch (error) {
+      console.error("Error toggling todo:", error);
+    }
+  };
+
+  const deleteTodo = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("todos")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setTodos(todos.filter((t) => t.id !== id));
+    } catch (error) {
+      console.error("Error deleting todo:", error);
     }
   };
 
   return (
-    <div className="bg-white shadow rounded-lg">
-      <div className="p-5">
-        <form onSubmit={handleAddTodo} className="flex gap-2 mb-4">
+    <div className="bg-white shadow rounded-lg p-6">
+      <h2 className="text-lg font-medium text-gray-900 mb-4">
+        今週の注力タスク
+      </h2>
+      <div className="space-y-4">
+        <div className="flex space-x-2">
           <input
             type="text"
             value={newTodo}
             onChange={(e) => setNewTodo(e.target.value)}
-            placeholder="新しいタスクを入力"
-            className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            onKeyPress={(e) => e.key === "Enter" && addTodo()}
+            placeholder="新しいタスクを入力..."
+            className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
           />
           <button
-            type="submit"
+            onClick={addTodo}
             className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             <PlusIcon className="h-5 w-5" />
           </button>
-        </form>
-
+        </div>
         <div className="space-y-2">
-          {todos.length === 0 ? (
-            <p className="text-sm text-gray-500">タスクがありません</p>
-          ) : (
-            todos.map((todo) => (
-              <div key={todo.id} className="flex items-center space-x-3">
+          {todos.map((todo) => (
+            <div
+              key={todo.id}
+              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+            >
+              <div className="flex items-center space-x-3">
                 <input
                   type="checkbox"
-                  checked={todo.is_completed}
-                  onChange={() => handleToggleTodo(todo.id, todo.is_completed)}
-                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  checked={todo.completed}
+                  onChange={() => toggleTodo(todo.id)}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                 />
                 <span
-                  className={`text-sm ${
-                    todo.is_completed
-                      ? "text-gray-400 line-through"
-                      : "text-gray-900"
+                  className={`text-gray-700 ${
+                    todo.completed ? "line-through text-gray-400" : ""
                   }`}
                 >
                   {todo.title}
                 </span>
               </div>
-            ))
-          )}
+              <button
+                onClick={() => deleteTodo(todo.id)}
+                className="text-gray-400 hover:text-red-500"
+              >
+                <TrashIcon className="h-5 w-5" />
+              </button>
+            </div>
+          ))}
         </div>
       </div>
     </div>

@@ -18,7 +18,7 @@ export function MilestoneForm({ milestoneId }: MilestoneFormProps) {
     description: "",
     target_date: new Date().toISOString().split("T")[0],
     status: "not_started",
-    priority: "medium",
+    progress: 0,
   });
 
   useEffect(() => {
@@ -36,12 +36,7 @@ export function MilestoneForm({ milestoneId }: MilestoneFormProps) {
         .single();
 
       if (error) throw error;
-      if (data) {
-        setMilestone({
-          ...data,
-          target_date: new Date(data.target_date).toISOString().split("T")[0],
-        });
-      }
+      if (data) setMilestone(data);
     } catch (error) {
       console.error("Error fetching milestone:", error);
     }
@@ -116,26 +111,26 @@ export function MilestoneForm({ milestoneId }: MilestoneFormProps) {
         />
       </div>
 
-      <div>
-        <label
-          htmlFor="target_date"
-          className="block text-sm font-medium text-gray-700"
-        >
-          目標日
-        </label>
-        <input
-          type="date"
-          id="target_date"
-          value={milestone.target_date}
-          onChange={(e) =>
-            setMilestone({ ...milestone, target_date: e.target.value })
-          }
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-white text-gray-900"
-          required
-        />
-      </div>
-
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div>
+          <label
+            htmlFor="target_date"
+            className="block text-sm font-medium text-gray-700"
+          >
+            目標日
+          </label>
+          <input
+            type="date"
+            id="target_date"
+            value={milestone.target_date}
+            onChange={(e) =>
+              setMilestone({ ...milestone, target_date: e.target.value })
+            }
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-white text-gray-900"
+            required
+          />
+        </div>
+
         <div>
           <label
             htmlFor="status"
@@ -154,49 +149,42 @@ export function MilestoneForm({ milestoneId }: MilestoneFormProps) {
             }
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-white text-gray-900"
           >
-            <option value="not_started">未着手</option>
+            <option value="not_started">未開始</option>
             <option value="in_progress">進行中</option>
             <option value="completed">完了</option>
           </select>
         </div>
-
-        <div>
-          <label
-            htmlFor="priority"
-            className="block text-sm font-medium text-gray-700"
-          >
-            優先度
-          </label>
-          <select
-            id="priority"
-            value={milestone.priority}
-            onChange={(e) =>
-              setMilestone({
-                ...milestone,
-                priority: e.target.value as Milestone["priority"],
-              })
-            }
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-white text-gray-900"
-          >
-            <option value="low">低</option>
-            <option value="medium">中</option>
-            <option value="high">高</option>
-          </select>
-        </div>
       </div>
 
-      <div className="flex justify-end space-x-4">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+      <div>
+        <label
+          htmlFor="progress"
+          className="block text-sm font-medium text-gray-700"
         >
-          キャンセル
-        </button>
+          進捗率
+        </label>
+        <input
+          type="number"
+          id="progress"
+          value={milestone.progress}
+          onChange={(e) =>
+            setMilestone({
+              ...milestone,
+              progress: parseInt(e.target.value) || 0,
+            })
+          }
+          min="0"
+          max="100"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-white text-gray-900"
+          required
+        />
+      </div>
+
+      <div className="flex justify-end">
         <button
           type="submit"
           disabled={loading}
-          className="rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
         >
           {loading ? "保存中..." : "保存"}
         </button>

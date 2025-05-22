@@ -7,21 +7,9 @@ import { PlusIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
 const statusLabels: Record<Milestone["status"], string> = {
-  not_started: "未着手",
+  not_started: "未開始",
   in_progress: "進行中",
   completed: "完了",
-};
-
-const priorityLabels: Record<Milestone["priority"], string> = {
-  low: "低",
-  medium: "中",
-  high: "高",
-};
-
-const priorityColors: Record<Milestone["priority"], string> = {
-  low: "bg-green-100 text-green-800",
-  medium: "bg-yellow-100 text-yellow-800",
-  high: "bg-red-100 text-red-800",
 };
 
 export function MilestoneList() {
@@ -38,7 +26,7 @@ export function MilestoneList() {
       const { data, error } = await supabase
         .from("milestones")
         .select("*")
-        .order("target_date", { ascending: true });
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setMilestones(data || []);
@@ -94,36 +82,20 @@ export function MilestoneList() {
             <p className="text-gray-500">マイルストーンがありません</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {milestones.map((milestone) => (
               <div
                 key={milestone.id}
                 className="bg-white border rounded-lg shadow-sm p-6"
               >
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="text-lg font-medium text-gray-900">
                       {milestone.title}
                     </h3>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-gray-500">
                       {milestone.description}
                     </p>
-                    <div className="mt-2 flex items-center space-x-4">
-                      <span className="text-sm text-gray-500">
-                        目標日:{" "}
-                        {new Date(milestone.target_date).toLocaleDateString()}
-                      </span>
-                      <span
-                        className={`px-2 py-1 text-xs rounded-full ${
-                          priorityColors[milestone.priority]
-                        }`}
-                      >
-                        優先度: {priorityLabels[milestone.priority]}
-                      </span>
-                      <span className="text-sm text-gray-500">
-                        ステータス: {statusLabels[milestone.status]}
-                      </span>
-                    </div>
                   </div>
                   <div className="flex space-x-2">
                     <Link
@@ -139,6 +111,34 @@ export function MilestoneList() {
                       <TrashIcon className="h-5 w-5" />
                     </button>
                   </div>
+                </div>
+
+                <div className="mb-4">
+                  <div className="flex justify-between text-sm text-gray-600 mb-1">
+                    <span>{statusLabels[milestone.status]}</span>
+                    <span>
+                      {new Date(milestone.target_date).toLocaleDateString(
+                        "ja-JP",
+                        {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        }
+                      )}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-indigo-600 h-2 rounded-full"
+                      style={{
+                        width: `${milestone.progress}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="text-sm text-gray-500">
+                  進捗率: {milestone.progress}%
                 </div>
               </div>
             ))}

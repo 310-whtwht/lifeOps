@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Strategy, StrategyReview } from "@/types/strategy";
-import { PencilIcon } from "@heroicons/react/24/outline";
 
 export function StrategyDocument() {
   const [kgi, setKGI] = useState<Strategy[]>([]);
