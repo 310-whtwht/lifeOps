@@ -12,15 +12,17 @@ interface CourseDetailProps {
 }
 
 const statusLabels = {
-  draft: "下書き",
+  not_started: "未開始",
+  planning: "計画中",
+  recording: "録画中",
   published: "公開中",
-  archived: "アーカイブ",
 };
 
 const statusColors = {
-  draft: "bg-gray-100 text-gray-800",
+  not_started: "bg-gray-100 text-gray-800",
+  planning: "bg-blue-100 text-blue-800",
+  recording: "bg-yellow-100 text-yellow-800",
   published: "bg-green-100 text-green-800",
-  archived: "bg-yellow-100 text-yellow-800",
 };
 
 export function CourseDetail({ courseId }: CourseDetailProps) {

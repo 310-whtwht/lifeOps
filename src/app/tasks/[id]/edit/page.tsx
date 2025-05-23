@@ -1,32 +1,40 @@
+// src/app/tasks/[id]/edit/page.tsx
+
 "use client";
 
 import { TaskForm } from "@/components/tasks/TaskForm";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useEffect, useState, useCallback } from "react";
+import { useParams } from "next/navigation";
+import { Task } from "@/types/task";
 
-type Props = {
-  params: {
-    id: string;
-  };
-};
+export default function EditTaskPage() {
+  // 動的ルートのパラメータをフック経由で取得
+  const params = useParams();
+  const id = params?.id as string;
 
-export default function EditTaskPage({ params }: Props) {
   const [isOpen, setIsOpen] = useState(true);
-  const [task, setTask] = useState(null);
+  const [task, setTask] = useState<Task | null>(null);
   const supabase = createClientComponentClient();
 
   const fetchTasks = useCallback(async () => {
-    const { data } = await supabase
-      .from("tasks")
-      .select("*")
-      .eq("id", params.id)
-      .single();
-    setTask(data);
-  }, [params.id, supabase]);
+    try {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("id", id)
+        .single();
+      if (error) throw error;
+      setTask(data);
+    } catch (error) {
+      console.error("Error fetching task:", error);
+    }
+  }, [id, supabase]);
 
   useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
+    if (id) fetchTasks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   if (!task) {
     return <div>タスクを読み込み中...</div>;

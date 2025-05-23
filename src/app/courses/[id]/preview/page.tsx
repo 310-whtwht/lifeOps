@@ -1,40 +1,42 @@
+// src/app/courses/[id]/preview/page.tsx
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Course } from "@/types/course";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 
-export default function CoursePreviewPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function CoursePreviewPage() {
+  // 動的ルートのパラメータをフック経由で取得
+  const params = useParams();
+  const id = params?.id as string;
+
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const supabase = createClientComponentClient();
 
   useEffect(() => {
-    fetchCourse();
-  }, [params.id]);
+    if (id) fetchCourse();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   const fetchCourse = async () => {
     try {
       const { data, error } = await supabase
         .from("courses")
         .select("*")
-        .eq("id", params.id)
+        .eq("id", id)
         .single();
 
       if (error) throw error;
 
-      // モジュール情報を取得
       const { data: modules, error: modulesError } = await supabase
         .from("modules")
         .select("*")
-        .eq("course_id", params.id)
+        .eq("course_id", id)
         .order("order", { ascending: true });
 
       if (modulesError) throw modulesError;

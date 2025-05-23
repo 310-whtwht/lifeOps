@@ -136,7 +136,7 @@ export function CourseForm({ course, onSave, onCancel }: CourseFormProps) {
     }));
   };
 
-  const updateModule = (index: number, field: keyof Module, value: string) => {
+  const updateModule = (index: number, field: keyof Module, value: string | boolean) => {
     setFormData((prev) => ({
       ...prev,
       modules: prev.modules?.map((module, i) =>

@@ -1,10 +1,12 @@
+// src/app/courses/[id]/page.tsx
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Course, CourseStatus } from "@/types/course";
 import { CourseForm } from "@/components/courses/CourseForm";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 
 const statusLabels: Record<CourseStatus, string> = {
@@ -21,14 +23,11 @@ const statusColors: Record<CourseStatus, string> = {
   published: "bg-green-100 text-green-800",
 };
 
-type PageProps = {
-  params: {
-    id: string;
-  };
-};
+export default function CoursePage() {
+  // 動的ルートのパラメータをフック経由で取得
+  const params = useParams();
+  const id = params?.id as string;
 
-export default function CoursePage({ params }: PageProps) {
-  const { id } = params;
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -36,7 +35,8 @@ export default function CoursePage({ params }: PageProps) {
   const supabase = createClientComponentClient();
 
   useEffect(() => {
-    fetchCourse();
+    if (id) fetchCourse();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchCourse = async () => {
@@ -49,7 +49,6 @@ export default function CoursePage({ params }: PageProps) {
 
       if (error) throw error;
 
-      // モジュール情報を取得
       const { data: modules, error: modulesError } = await supabase
         .from("modules")
         .select("*")
@@ -74,7 +73,6 @@ export default function CoursePage({ params }: PageProps) {
     if (!confirm("この講座を削除してもよろしいですか？")) return;
 
     try {
-      // モジュールを削除
       const { error: modulesError } = await supabase
         .from("modules")
         .delete()
@@ -82,7 +80,6 @@ export default function CoursePage({ params }: PageProps) {
 
       if (modulesError) throw modulesError;
 
-      // 講座を削除
       const { error: courseError } = await supabase
         .from("courses")
         .delete()
@@ -101,7 +98,6 @@ export default function CoursePage({ params }: PageProps) {
     if (!course) return;
 
     try {
-      // 新しい講座を作成
       const { data: newCourse, error: courseError } = await supabase
         .from("courses")
         .insert({
@@ -120,7 +116,6 @@ export default function CoursePage({ params }: PageProps) {
       if (courseError) throw courseError;
       if (!newCourse) throw new Error("Failed to create course");
 
-      // モジュールを複製
       if (course.modules.length > 0) {
         const modules = course.modules.map((module) => ({
           course_id: newCourse.id,
