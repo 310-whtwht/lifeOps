@@ -112,6 +112,14 @@ export function JournalList() {
                         {moodLabels[journal.mood]}
                       </span>
                     </div>
+                    <p className="text-sm text-gray-500 -mt-2 mb-4">
+                      {new Date(journal.date).toLocaleDateString("ja-JP", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                        weekday: "long",
+                      })}
+                    </p>
                     <div className="prose max-w-none text-gray-600 whitespace-pre-wrap mb-4">
                       {journal.content}
                     </div>
