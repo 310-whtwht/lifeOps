@@ -36,7 +36,7 @@ export function JournalList() {
       const { data, error } = await supabase
         .from("journals")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("date", { ascending: false });
 
       if (error) throw error;
       setJournals(data || []);
@@ -100,8 +100,8 @@ export function JournalList() {
               <div className="p-6">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <h3 className="text-xl font-semibold text-gray-900">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <h3 className="text-2xl font-semibold text-gray-900">
                         {journal.title}
                       </h3>
                       <span
@@ -112,17 +112,6 @@ export function JournalList() {
                         {moodLabels[journal.mood]}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-500 mb-4">
-                      {new Date(journal.created_at).toLocaleDateString(
-                        "ja-JP",
-                        {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                          weekday: "long",
-                        }
-                      )}
-                    </p>
                     <div className="prose max-w-none text-gray-600 whitespace-pre-wrap mb-4">
                       {journal.content}
                     </div>

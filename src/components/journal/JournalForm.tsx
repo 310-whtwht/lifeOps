@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { JournalEntry } from "@/types/journal";
+import { Journal } from "@/types/journal";
 import { TagSelector } from "@/components/tags/TagSelector";
 
 interface JournalFormProps {
@@ -14,10 +14,12 @@ export function JournalForm({ entryId }: JournalFormProps) {
   const router = useRouter();
   const supabase = createClientComponentClient();
   const [loading, setLoading] = useState(false);
-  const [entry, setEntry] = useState<Partial<JournalEntry>>({
+  const [entry, setEntry] = useState<Partial<Journal>>({
+    title: "",
     content: "",
-    mood: 3,
+    mood: "neutral",
     tags: [],
+    date: new Date().toISOString().split("T")[0],
   });
 
   useEffect(() => {
@@ -29,15 +31,8 @@ export function JournalForm({ entryId }: JournalFormProps) {
   const fetchEntry = async () => {
     try {
       const { data, error } = await supabase
-        .from("journal_entries")
-        .select(
-          `
-          *,
-          journal_tags (
-            tag_id
-          )
-        `
-        )
+        .from("journals")
+        .select("*")
         .eq("id", entryId)
         .single();
 
@@ -45,11 +40,13 @@ export function JournalForm({ entryId }: JournalFormProps) {
       if (data) {
         setEntry({
           ...data,
-          tags: data.journal_tags.map((jt: { tag_id: string }) => jt.tag_id),
+          date: data.date
+            ? new Date(data.date).toISOString().split("T")[0]
+            : new Date().toISOString().split("T")[0],
         });
       }
     } catch (error) {
-      console.error("Error fetching journal entry:", error);
+      console.error("Error fetching journal:", error);
     }
   };
 
@@ -61,70 +58,41 @@ export function JournalForm({ entryId }: JournalFormProps) {
       if (entryId) {
         // エントリーの更新
         const { error: entryError } = await supabase
-          .from("journal_entries")
+          .from("journals")
           .update({
+            title: entry.title,
             content: entry.content,
             mood: entry.mood,
+            tags: entry.tags,
+            date: entry.date,
             updated_at: new Date().toISOString(),
           })
           .eq("id", entryId);
 
         if (entryError) throw entryError;
-
-        // タグの更新
-        const { error: tagError } = await supabase
-          .from("journal_tags")
-          .delete()
-          .eq("journal_id", entryId);
-
-        if (tagError) throw tagError;
-
-        if (entry.tags && entry.tags.length > 0) {
-          const { error: insertTagError } = await supabase
-            .from("journal_tags")
-            .insert(
-              entry.tags.map((tagId) => ({
-                journal_id: entryId,
-                tag_id: tagId,
-              }))
-            );
-
-          if (insertTagError) throw insertTagError;
-        }
       } else {
         // エントリーの作成
-        const { data: newEntry, error: entryError } = await supabase
-          .from("journal_entries")
-          .insert([
-            {
-              content: entry.content,
-              mood: entry.mood,
-            },
-          ])
-          .select()
-          .single();
+        const { error: entryError } = await supabase.from("journals").insert({
+          title:
+            entry.title ||
+            (entry.date
+              ? new Date(entry.date).toLocaleDateString("ja-JP")
+              : new Date().toLocaleDateString("ja-JP")),
+          content: entry.content,
+          mood: entry.mood,
+          tags: entry.tags || [],
+          date: entry.date,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
 
         if (entryError) throw entryError;
-
-        // タグの作成
-        if (newEntry && entry.tags && entry.tags.length > 0) {
-          const { error: tagError } = await supabase
-            .from("journal_tags")
-            .insert(
-              entry.tags.map((tagId) => ({
-                journal_id: newEntry.id,
-                tag_id: tagId,
-              }))
-            );
-
-          if (tagError) throw tagError;
-        }
       }
 
       router.push("/journal");
       router.refresh();
     } catch (error) {
-      console.error("Error saving journal entry:", error);
+      console.error("Error saving journal:", error);
       alert("ジャーナルの保存に失敗しました。");
     } finally {
       setLoading(false);
@@ -135,24 +103,69 @@ export function JournalForm({ entryId }: JournalFormProps) {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
         <label
+          htmlFor="date"
+          className="block text-sm font-medium text-gray-700"
+        >
+          日付
+        </label>
+        <input
+          type="date"
+          id="date"
+          value={entry.date}
+          onChange={(e) => setEntry({ ...entry, date: e.target.value })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          required
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="title"
+          className="block text-sm font-medium text-gray-700"
+        >
+          タイトル
+        </label>
+        <input
+          type="text"
+          id="title"
+          value={entry.title}
+          onChange={(e) => setEntry({ ...entry, title: e.target.value })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          placeholder="タイトルを入力してください"
+          required
+        />
+      </div>
+
+      <div>
+        <label
           htmlFor="mood"
           className="block text-sm font-medium text-gray-700"
         >
           今日の気分
         </label>
         <div className="mt-1 flex items-center space-x-4">
-          {[1, 2, 3, 4, 5].map((value) => (
+          {["terrible", "bad", "neutral", "good", "great"].map((value) => (
             <button
               key={value}
               type="button"
-              onClick={() => setEntry({ ...entry, mood: value })}
-              className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-medium transition-colors ${
+              onClick={() =>
+                setEntry({ ...entry, mood: value as Journal["mood"] })
+              }
+              className={`w-20 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
                 entry.mood === value
                   ? "bg-indigo-600 text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
-              {value}
+              {value === "terrible"
+                ? "最悪"
+                : value === "bad"
+                ? "悪い"
+                : value === "neutral"
+                ? "普通"
+                : value === "good"
+                ? "良い"
+                : "素晴らしい"}
             </button>
           ))}
         </div>
