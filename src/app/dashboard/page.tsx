@@ -6,6 +6,7 @@ import { PencilIcon, CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { KpiProgress } from "@/components/dashboard/KpiProgress";
 import { HabitCheck } from "@/components/dashboard/HabitCheck";
 import { TodoList } from "@/components/dashboard/TodoList";
+import { WeeklySprintCard } from "@/components/dashboard/WeeklySprintCard";
 
 export default function DashboardPage() {
   const [kgi, setKgi] = useState("");
@@ -108,7 +109,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div className="container mx-auto p-4">
       <div className="grid grid-cols-1 gap-6">
         {/* KGIセクション */}
         <div className="bg-white shadow rounded-lg p-6">
@@ -204,6 +205,9 @@ export default function DashboardPage() {
 
         {/* KPI進捗セクション */}
         <KpiProgress />
+
+        {/* 週間スプリントセクション */}
+        <WeeklySprintCard />
 
         {/* 習慣チェックセクション */}
         <HabitCheck />

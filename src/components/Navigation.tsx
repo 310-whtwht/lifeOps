@@ -11,6 +11,7 @@ import {
   Cog6ToothIcon,
   TagIcon,
   AcademicCapIcon,
+  CalendarIcon,
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
 
@@ -44,6 +45,11 @@ const navigation = [
     name: "マイルストーン",
     href: "/milestones",
     icon: FlagIcon,
+  },
+  {
+    name: "週間リソースプランナー",
+    href: "/weekly-plan",
+    icon: CalendarIcon,
   },
   {
     name: "ジャーナル",
