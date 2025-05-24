@@ -17,6 +17,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                const savedColor = localStorage.getItem('background-color');
+                if (savedColor) {
+                  document.documentElement.style.setProperty('--app-background-color', savedColor);
+                }
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className={inter.className}>
         <div className="min-h-screen">
           <Navigation />

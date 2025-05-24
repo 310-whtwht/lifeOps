@@ -17,11 +17,25 @@ const BASE_COLORS = [
   { name: "スカイブルー", value: "#e0f2fe" },
 ];
 
+// 背景色を適用する関数
+const applyBackgroundColor = (color: string) => {
+  document.documentElement.style.setProperty("--app-background-color", color);
+  localStorage.setItem("background-color", color);
+};
+
 export function AppearanceSettings() {
-  const [backgroundColor, setBackgroundColor] = useState("#ffffff");
+  const [backgroundColor, setBackgroundColor] = useState(() => {
+    // 初期値をローカルストレージから取得
+    return localStorage.getItem("background-color") || "#ffffff";
+  });
   const [loading, setLoading] = useState(true);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const supabase = createClientComponentClient();
+
+  // 初期ロード時に背景色を設定
+  useEffect(() => {
+    applyBackgroundColor(backgroundColor);
+  }, []);
 
   useEffect(() => {
     fetchSettings();
@@ -40,10 +54,7 @@ export function AppearanceSettings() {
 
       if (data) {
         setBackgroundColor(data.background_color);
-        document.documentElement.style.setProperty(
-          "--app-background-color",
-          data.background_color
-        );
+        applyBackgroundColor(data.background_color);
       }
     } catch (error) {
       console.error("Error fetching settings:", error);
@@ -65,10 +76,7 @@ export function AppearanceSettings() {
       if (error) throw error;
 
       // 背景色を適用
-      document.documentElement.style.setProperty(
-        "--app-background-color",
-        color
-      );
+      applyBackgroundColor(color);
     } catch (error) {
       console.error("Error saving settings:", error);
       alert("設定の保存に失敗しました。");
