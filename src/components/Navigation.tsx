@@ -37,14 +37,19 @@ const navigation = [
     icon: BookOpenIcon,
   },
   {
+    name: "マイルストーン",
+    href: "/milestones",
+    icon: FlagIcon,
+  },
+  {
     name: "KPI",
     href: "/kpi",
     icon: ChartBarIcon,
   },
   {
-    name: "マイルストーン",
-    href: "/milestones",
-    icon: FlagIcon,
+    name: "KDI",
+    href: "/tasks",
+    icon: ChartBarIcon,
   },
   {
     name: "週間リソースプランナー",
