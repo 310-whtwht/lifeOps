@@ -2,18 +2,18 @@
 
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { TrashIcon } from "@heroicons/react/24/outline";
 
 interface Todo {
   id: string;
   title: string;
   completed: boolean;
   created_at: string;
+  due_date?: string;
 }
 
 export function TodoList() {
   const [todos, setTodos] = useState<Todo[]>([]);
-  const [newTodo, setNewTodo] = useState("");
   const supabase = createClientComponentClient();
 
   useEffect(() => {
@@ -31,26 +31,6 @@ export function TodoList() {
       if (data) setTodos(data);
     } catch (error) {
       console.error("Error fetching todos:", error);
-    }
-  };
-
-  const addTodo = async () => {
-    if (!newTodo.trim()) return;
-
-    try {
-      const { data, error } = await supabase.from("todos").insert({
-        title: newTodo.trim(),
-        completed: false,
-        created_at: new Date().toISOString(),
-      });
-
-      if (error) throw error;
-      if (data) {
-        setTodos([...todos, data[0]]);
-        setNewTodo("");
-      }
-    } catch (error) {
-      console.error("Error adding todo:", error);
     }
   };
 
@@ -89,30 +69,44 @@ export function TodoList() {
     }
   };
 
+  // 今日の日付
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  // 7日後の日付
+  const oneWeekLater = new Date();
+  oneWeekLater.setDate(today.getDate() + 7);
+  oneWeekLater.setHours(23, 59, 59, 999);
+
+  // 1週間以内のタスクと期限切れのタスクをフィルタ
+  const todosThisWeek = todos.filter((todo) => {
+    if (!todo.due_date) return false;
+    const due = new Date(todo.due_date);
+    due.setHours(0, 0, 0, 0);
+    // due_dateが1週間後以前（期限切れも含む）
+    return due <= oneWeekLater;
+  });
+
+  // 期限切れかどうかを判定する関数
+  const isOverdue = (dueDate: string) => {
+    const due = new Date(dueDate);
+    due.setHours(0, 0, 0, 0);
+    return due < today;
+  };
+
+  // 日付をフォーマットする関数
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return `${date.getMonth() + 1}/${date.getDate()}`;
+  };
+
   return (
     <div className="bg-white shadow rounded-lg p-6">
       <h2 className="text-lg font-medium text-gray-900 mb-4">
         今週の注力タスク
       </h2>
       <div className="space-y-4">
-        <div className="flex space-x-2">
-          <input
-            type="text"
-            value={newTodo}
-            onChange={(e) => setNewTodo(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && addTodo()}
-            placeholder="新しいタスクを入力..."
-            className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-          <button
-            onClick={addTodo}
-            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            <PlusIcon className="h-5 w-5" />
-          </button>
-        </div>
         <div className="space-y-2">
-          {todos.map((todo) => (
+          {todosThisWeek.map((todo) => (
             <div
               key={todo.id}
               className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
@@ -124,13 +118,30 @@ export function TodoList() {
                   onChange={() => toggleTodo(todo.id)}
                   className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                 />
-                <span
-                  className={`text-gray-700 ${
-                    todo.completed ? "line-through text-gray-400" : ""
-                  }`}
-                >
-                  {todo.title}
-                </span>
+                <div className="flex flex-col">
+                  <span
+                    className={`${
+                      todo.completed
+                        ? "line-through text-gray-400"
+                        : todo.due_date && isOverdue(todo.due_date)
+                        ? "text-red-600"
+                        : "text-gray-700"
+                    }`}
+                  >
+                    {todo.title}
+                  </span>
+                  {todo.due_date && (
+                    <span
+                      className={`text-xs ${
+                        isOverdue(todo.due_date)
+                          ? "text-red-500"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      期限: {formatDate(todo.due_date)}
+                    </span>
+                  )}
+                </div>
               </div>
               <button
                 onClick={() => deleteTodo(todo.id)}
